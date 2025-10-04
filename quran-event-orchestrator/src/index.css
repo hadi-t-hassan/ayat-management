@@ -1,0 +1,274 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Quran Events Management - Islamic-inspired Design System
+All colors MUST be HSL for consistency and theming.
+*/
+
+@layer base {
+  :root {
+    /* Islamic-inspired color palette */
+    --background: 249 51% 98%;
+    --foreground: 158 64% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 158 64% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 158 64% 15%;
+
+    /* Deep emerald as primary - traditional Islamic green */
+    --primary: 158 64% 20%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 158 64% 16%;
+    --primary-light: 158 30% 92%;
+
+    /* Warm gold accents */
+    --accent: 43 74% 49%;
+    --accent-foreground: 0 0% 98%;
+    --accent-light: 43 74% 95%;
+
+    /* Soft neutrals */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 158 64% 20%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Status colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 43 13% 20%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Interface elements */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 158 64% 20%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar colors - deeper emerald theme */
+    --sidebar-background: 158 64% 22%;
+    --sidebar-foreground: 158 30% 92%;
+    --sidebar-primary: 158 64% 28%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 158 64% 18%;
+    --sidebar-accent-foreground: 158 30% 92%;
+    --sidebar-border: 158 64% 16%;
+    --sidebar-ring: 43 74% 49%;
+
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+
+    /* Shadows with emerald tint */
+    --shadow-sm: 0 1px 2px 0 hsl(var(--primary) / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(var(--primary) / 0.1), 0 2px 4px -1px hsl(var(--primary) / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--primary) / 0.1), 0 4px 6px -2px hsl(var(--primary) / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(var(--primary) / 0.1), 0 10px 10px -5px hsl(var(--primary) / 0.04);
+
+    /* Animation timings */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 158 64% 8%;
+    --foreground: 158 30% 92%;
+
+    --card: 158 64% 10%;
+    --card-foreground: 158 30% 92%;
+
+    --popover: 158 64% 10%;
+    --popover-foreground: 158 30% 92%;
+
+    --primary: 158 64% 35%;
+    --primary-foreground: 158 64% 8%;
+    --primary-hover: 158 64% 40%;
+    --primary-light: 158 64% 12%;
+
+    --accent: 43 74% 49%;
+    --accent-foreground: 43 13% 20%;
+    --accent-light: 43 74% 15%;
+
+    --secondary: 158 32% 15%;
+    --secondary-foreground: 158 30% 92%;
+
+    --muted: 158 32% 15%;
+    --muted-foreground: 158 15% 65%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 43 13% 20%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 158 32% 18%;
+    --input: 158 32% 18%;
+    --ring: 158 64% 35%;
+
+    --sidebar-background: 158 64% 6%;
+    --sidebar-foreground: 158 30% 92%;
+    --sidebar-primary: 158 64% 35%;
+    --sidebar-primary-foreground: 158 64% 8%;
+    --sidebar-accent: 158 64% 12%;
+    --sidebar-accent-foreground: 158 30% 92%;
+    --sidebar-border: 158 64% 10%;
+    --sidebar-ring: 43 74% 49%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl lg:text-2xl;
+  }
+}
+
+@layer components {
+  /* Status badges */
+  .status-pending {
+    @apply bg-warning/10 text-warning-foreground border-warning/20;
+  }
+
+  .status-confirmed {
+    @apply bg-success/10 text-success-foreground border-success/20;
+  }
+
+  .status-cancelled {
+    @apply bg-destructive/10 text-destructive-foreground border-destructive/20;
+  }
+
+  .status-completed {
+    @apply bg-primary/10 text-primary border-primary/20;
+  }
+
+  /* Card variants */
+  .card-gradient {
+    @apply bg-gradient-to-br from-card to-muted/50;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Button effects */
+  .btn-shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-shimmer::before {
+    content: '';
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700;
+  }
+
+  .btn-shimmer:hover::before {
+    @apply translate-x-full;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    html {
+      font-size: 14px;
+    }
+    
+    body {
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+}
+
+@layer components {
+  /* Mobile-specific utilities */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  .mobile-safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Responsive text sizing */
+  .text-responsive {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  /* Mobile-friendly buttons */
+  .btn-mobile {
+    @apply min-h-[44px] min-w-[44px] touch-manipulation;
+  }
+  
+  /* Mobile-friendly cards */
+  .card-mobile {
+    @apply rounded-lg shadow-sm border-0 bg-card;
+  }
+  
+  /* Mobile navigation */
+  .nav-mobile {
+    @apply fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out;
+  }
+  
+  .nav-mobile.closed {
+    @apply -translate-x-full;
+  }
+  
+  /* Mobile overlay */
+  .mobile-overlay {
+    @apply fixed inset-0 bg-black/50 z-40;
+  }
+}
