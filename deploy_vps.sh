@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Ayat Events Management Deployment Script
-# This script deploys both Django backend and React frontend to VPS
+# Ayat Events Management VPS Deployment Script
+# For path: /home/ubuntu/projects/ayat-management-system/ayat-management
 
 set -e
 
@@ -10,7 +10,6 @@ PROJECT_DIR="/home/ubuntu/projects/ayat-management-system/ayat-management"
 BACKEND_DIR="$PROJECT_DIR/backend"
 FRONTEND_DIR="$PROJECT_DIR/quran-event-orchestrator"
 VENV_DIR="$PROJECT_DIR/venv"
-REPO_URL="https://github.com/hadi-t-hassan/ayat-management.git"
 
 # Colors for output
 RED='\033[0;31m'
@@ -19,35 +18,28 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}🚀 Starting Ayat Events Management Deployment${NC}"
+echo -e "${YELLOW}📁 Project Directory: $PROJECT_DIR${NC}"
+
+# Check if project directory exists
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo -e "${RED}❌ Project directory not found: $PROJECT_DIR${NC}"
+    echo -e "${YELLOW}Please ensure the project is cloned to the correct location${NC}"
+    exit 1
+fi
 
 # Update system packages
 echo -e "${YELLOW}📦 Updating system packages...${NC}"
-sudo apt update && sudo apt upgrade -y
+sudo apt update
 
-# Install required packages
+# Install required packages if not already installed
 echo -e "${YELLOW}📦 Installing required packages...${NC}"
 sudo apt install -y nginx python3 python3-pip python3-venv nodejs npm git
-
-# Create project directory
-echo -e "${YELLOW}📁 Creating project directory...${NC}"
-mkdir -p $PROJECT_DIR
-chown -R $USER:$USER $PROJECT_DIR
-
-# Clone or update repository
-if [ -d "$PROJECT_DIR/.git" ]; then
-    echo -e "${YELLOW}🔄 Updating existing repository...${NC}"
-    cd $PROJECT_DIR
-    git pull origin main
-else
-    echo -e "${YELLOW}📥 Cloning repository...${NC}"
-    git clone $REPO_URL $PROJECT_DIR
-fi
 
 # Backend Setup
 echo -e "${YELLOW}🐍 Setting up Django backend...${NC}"
 cd $BACKEND_DIR
 
-# Create virtual environment
+# Create virtual environment if it doesn't exist
 if [ ! -d "$VENV_DIR" ]; then
     echo -e "${YELLOW}📦 Creating Python virtual environment...${NC}"
     python3 -m venv $VENV_DIR
@@ -125,7 +117,7 @@ sudo systemctl status nginx --no-pager
 
 echo -e "${GREEN}✅ Deployment completed successfully!${NC}"
 echo -e "${GREEN}🌐 Your application is now available at: https://ayat.pingtech.dev${NC}"
-echo -e "${YELLOW}📝 Don't forget to:${NC}"
-echo -e "${YELLOW}   1. Configure SSL certificates${NC}"
+echo -e "${YELLOW}📝 Next steps:${NC}"
+echo -e "${YELLOW}   1. Configure SSL certificates with Let's Encrypt${NC}"
 echo -e "${YELLOW}   2. Update SECRET_KEY in production settings${NC}"
-echo -e "${YELLOW}   3. Configure your domain DNS${NC}"
+echo -e "${YELLOW}   3. Test the application functionality${NC}"
