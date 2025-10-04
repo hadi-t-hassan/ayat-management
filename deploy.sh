@@ -131,7 +131,7 @@ echo -e "${YELLOW}👤 Creating superuser...${NC}"
 python manage.py shell --settings=quran_events_backend.settings_production << EOF
 from accounts.models import User
 if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+    User.objects.create_superuser('admin', 'admin123')
     print('Superuser created')
 else:
     print('Superuser already exists')
