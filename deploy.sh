@@ -165,20 +165,6 @@ server {
     listen 80;
     listen [::]:80;
     server_name ayat.pingtech.dev;
-
-    # Redirect HTTP to HTTPS
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    http2 on;
-    server_name ayat.pingtech.dev;
-
-    # SSL Configuration (placeholder - will be updated by Certbot)
-    ssl_certificate /etc/letsencrypt/live/ayat.pingtech.dev/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/ayat.pingtech.dev/privkey.pem;
     
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
