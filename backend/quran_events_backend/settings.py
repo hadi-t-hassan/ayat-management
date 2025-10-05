@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--8o&a@%=5hs(vs&o!13m360!8x@h$tinic!i855#%k9+*&i218'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['ayat.pingtech.dev', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -219,6 +219,10 @@ CORS_ALLOW_METHODS = [
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files
 MEDIA_URL = '/media/'
