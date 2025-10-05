@@ -21,16 +21,27 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     # serializer_class = CustomTokenObtainPairSerializer
     
     def post(self, request, *args, **kwargs):
+        # Debug logging
+        print(f"Login attempt: username={request.data.get('username')}")
+        
         response = super().post(request, *args, **kwargs)
+        
+        print(f"Response status: {response.status_code}")
+        if hasattr(response, 'data'):
+            print(f"Response data keys: {list(response.data.keys()) if response.data else 'None'}")
+        
         if response.status_code == 200:
             # Get user data using username
             username = request.data.get('username')
-            user = User.objects.get(username=username)
-            user_data = UserSerializer(user).data
-            
-            # Add user data to the existing response (don't override tokens)
-            response.data['user'] = user_data
-            response.data['profile'] = ProfileSerializer(user.profile).data if hasattr(user, 'profile') else None
+            try:
+                user = User.objects.get(username=username)
+                user_data = UserSerializer(user).data
+                
+                # Add user data to the existing response (don't override tokens)
+                response.data['user'] = user_data
+                response.data['profile'] = ProfileSerializer(user.profile).data if hasattr(user, 'profile') else None
+            except Exception as e:
+                print(f"Error getting user data: {e}")
         
         return response
 
