@@ -5,6 +5,16 @@ from rest_framework.views import APIView
 from django.db.models import Q, Count
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import pandas as pd
+import openpyxl
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from datetime import datetime, date, time
+import io
+import os
 from .models import Event, Song, EventParticipant, EventStats
 from .serializers import (
     EventSerializer, EventCreateSerializer, EventUpdateSerializer,
@@ -311,4 +321,202 @@ def leave_event_view(request, pk):
         return Response(
             {'error': 'Not participating in this event'},
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def download_sample_excel(request):
+    """Download sample Excel file for event import"""
+    try:
+        # Create a new workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Events Import Template"
+        
+        # Define headers based on Event model
+        headers = [
+            'Day', 'Date', 'Time', 'Duration (minutes)', 'Place', 'Number of Participants',
+            'Status', 'Meeting Time', 'Meeting Date', 'Place of Meeting', 'Vehicle',
+            'Camera Man', 'Participation Type', 'Event Reason'
+        ]
+        
+        # Add headers with styling
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # Add sample data
+        sample_data = [
+            ['Friday', '2024-01-15', '18:00', '120', 'Masjid Al-Noor', '25',
+             'pending', '17:30', '2024-01-15', 'Main Hall', 'Bus #123',
+             'Ahmed Ali', 'Recitation', 'Weekly Quran Recitation Session'],
+            ['Saturday', '2024-01-20', '19:30', '90', 'Community Center', '15',
+             'confirmed', '19:00', '2024-01-20', 'Conference Room', 'Van #456',
+             'Omar Hassan', 'Listening', 'Special Event for New Muslims']
+        ]
+        
+        for row, data in enumerate(sample_data, 2):
+            for col, value in enumerate(data, 1):
+                ws.cell(row=row, column=col, value=value)
+        
+        # Auto-adjust column widths
+        for column in ws.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Create response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="events_import_template.xlsx"'
+        
+        # Save workbook to response
+        wb.save(response)
+        return response
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to generate sample Excel: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def import_events_excel(request):
+    """Import events from Excel file"""
+    try:
+        if 'file' not in request.FILES:
+            return Response(
+                {'error': 'No file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        excel_file = request.FILES['file']
+        
+        # Validate file type
+        if not excel_file.name.endswith(('.xlsx', '.xls')):
+            return Response(
+                {'error': 'Invalid file type. Please upload an Excel file (.xlsx or .xls)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Read Excel file
+        try:
+            df = pd.read_excel(excel_file)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to read Excel file: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate required columns
+        required_columns = [
+            'Day', 'Date', 'Time', 'Duration (minutes)', 'Place', 'Number of Participants'
+        ]
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            return Response(
+                {'error': f'Missing required columns: {", ".join(missing_columns)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Process events
+        imported_count = 0
+        errors = []
+        
+        with transaction.atomic():
+            for index, row in df.iterrows():
+                try:
+                    # Parse and validate data
+                    day = str(row['Day']).strip()
+                    event_date = pd.to_datetime(row['Date']).date()
+                    event_time = pd.to_datetime(row['Time']).time()
+                    duration = int(row['Duration (minutes)'])
+                    place = str(row['Place']).strip()
+                    participants = int(row['Number of Participants'])
+                    
+                    # Optional fields
+                    status = str(row.get('Status', 'pending')).strip().lower()
+                    if status not in ['pending', 'confirmed', 'completed', 'cancelled']:
+                        status = 'pending'
+                    
+                    meeting_time = None
+                    if pd.notna(row.get('Meeting Time')):
+                        meeting_time = pd.to_datetime(row['Meeting Time']).time()
+                    
+                    meeting_date = None
+                    if pd.notna(row.get('Meeting Date')):
+                        meeting_date = pd.to_datetime(row['Meeting Date']).date()
+                    
+                    place_of_meeting = str(row.get('Place of Meeting', '')).strip() or None
+                    vehicle = str(row.get('Vehicle', '')).strip() or None
+                    camera_man = str(row.get('Camera Man', '')).strip() or None
+                    participation_type = str(row.get('Participation Type', '')).strip() or None
+                    event_reason = str(row.get('Event Reason', '')).strip() or None
+                    
+                    # Create event
+                    event = Event.objects.create(
+                        day=day,
+                        date=event_date,
+                        time=event_time,
+                        duration=duration,
+                        place=place,
+                        number_of_participants=participants,
+                        status=status,
+                        meeting_time=meeting_time,
+                        meeting_date=meeting_date,
+                        place_of_meeting=place_of_meeting,
+                        vehicle=vehicle,
+                        camera_man=camera_man,
+                        participation_type=participation_type,
+                        event_reason=event_reason,
+                        created_by=request.user
+                    )
+                    
+                    imported_count += 1
+                    
+                except Exception as e:
+                    errors.append(f'Row {index + 2}: {str(e)}')
+                    continue
+        
+        # Update statistics
+        try:
+            stats = EventStats.get_or_create_stats()
+            stats.update_stats()
+        except:
+            pass  # Don't fail import if stats update fails
+        
+        response_data = {
+            'message': f'Successfully imported {imported_count} events',
+            'imported_count': imported_count,
+            'total_rows': len(df)
+        }
+        
+        if errors:
+            response_data['errors'] = errors[:10]  # Limit to first 10 errors
+            response_data['error_count'] = len(errors)
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Import failed: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

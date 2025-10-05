@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar as CalendarIcon, Clock, Plus, Edit, Trash2, X, CheckCircle, XCircle, AlertCircle, Eye, Share2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Music, Shirt } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Plus, Edit, Trash2, X, CheckCircle, XCircle, AlertCircle, Eye, Share2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Music, Shirt, Upload, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -102,6 +102,9 @@ export default function ManageEvents() {
     key: null,
     direction: null
   });
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [eventForm, setEventForm] = useState({
     day: '',
@@ -570,6 +573,105 @@ export default function ManageEvents() {
       title: "Export Successful",
       description: `${sortedEvents.length} events exported to Excel file`,
     });
+  };
+
+  const handleDownloadSample = async () => {
+    try {
+      const response = await fetch('/api/events/import/sample/', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download sample file');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'events_import_template.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Sample Downloaded",
+        description: "Sample Excel template downloaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download sample file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        setSelectedFile(file);
+      } else {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select an Excel file (.xlsx or .xls)",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleImportEvents = async () => {
+    if (!selectedFile) return;
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/events/import/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Import Successful",
+          description: data.message,
+        });
+        
+        // Refresh events list
+        await fetchEvents();
+        
+        // Close dialog and reset
+        setImportDialogOpen(false);
+        setSelectedFile(null);
+      } else {
+        toast({
+          title: "Import Failed",
+          description: data.error || "Failed to import events",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: "Network error during import",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -1394,6 +1496,16 @@ ${event.dress_details && event.dress_details.length > 0 ? `- Dress: ${event.dres
                 <FileText className="h-4 w-4" />
                 <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
                 <span className="sm:hidden">{showFilters ? 'Hide' : 'Filters'}</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setImportDialogOpen(true)}
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
+              >
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">Import Events</span>
+                <span className="sm:hidden">Import</span>
               </Button>
             </div>
           </div>
@@ -2229,6 +2341,81 @@ ${event.dress_details && event.dress_details.length > 0 ? `- Dress: ${event.dres
           <DialogFooter>
             <Button onClick={() => setDressDialogOpen(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Events Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Events from Excel</DialogTitle>
+            <DialogDescription>
+              Upload an Excel file to import multiple events at once. Download the sample template to see the required format.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="excel-file">Select Excel File</Label>
+              <Input
+                id="excel-file"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileSelect}
+                className="cursor-pointer"
+              />
+              {selectedFile && (
+                <p className="text-sm text-muted-foreground">
+                  Selected: {selectedFile.name}
+                </p>
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                <span className="text-sm font-medium">Need a template?</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadSample}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Sample
+              </Button>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImportDialogOpen(false);
+                setSelectedFile(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportEvents}
+              disabled={!selectedFile || importing}
+              className="gap-2"
+            >
+              {importing ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Import Events
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

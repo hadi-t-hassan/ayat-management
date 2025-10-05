@@ -16,4 +16,8 @@ urlpatterns = [
     # Dashboard and Stats
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
     path('stats/', views.EventStatsView.as_view(), name='event_stats'),
+    
+    # Excel Import/Export
+    path('events/import/sample/', views.download_sample_excel, name='download_sample_excel'),
+    path('events/import/', views.import_events_excel, name='import_events_excel'),
 ]
