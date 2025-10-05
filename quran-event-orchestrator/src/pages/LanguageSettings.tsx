@@ -205,18 +205,18 @@ export default function LanguageSettings() {
                 Edit translation values for {language.toUpperCase()}
               </CardDescription>
             </div>
-            <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            <div className={`flex flex-col gap-3 ${isRTL ? 'sm:flex-row-reverse' : 'sm:flex-row'} sm:items-center`}>
               {hasChanges && (
-                <Badge variant="outline" className="text-orange-600 mb-2 sm:mb-0">
+                <Badge variant="outline" className="text-orange-600 w-fit">
                   Unsaved Changes
                 </Badge>
               )}
-              <div className={`flex flex-col sm:flex-row gap-2 w-full sm:w-auto ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+              <div className={`flex flex-col gap-2 sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={resetTranslations}
-                  className="flex items-center gap-1 w-full sm:w-auto"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Reset
@@ -224,12 +224,12 @@ export default function LanguageSettings() {
                 <Button
                   onClick={saveTranslations}
                   disabled={!hasChanges}
-                  className="flex items-center gap-1 w-full sm:w-auto"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                   size="sm"
                 >
                   <Save className="h-4 w-4" />
                   <span className="hidden sm:inline">Save Changes</span>
-                  <span className="sm:hidden">Save</span>
+                  <span className="sm:hidden">Save Changes</span>
                 </Button>
               </div>
             </div>

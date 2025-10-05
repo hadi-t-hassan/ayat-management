@@ -1466,47 +1466,51 @@ ${event.dress_details && event.dress_details.length > 0 ? `- Dress: ${event.dres
                 )}
               </CardDescription>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="outline"
-                onClick={() => handleSort('date_time')}
-                className="gap-2 w-full sm:w-auto"
-                size="sm"
-              >
-                <Clock className="h-4 w-4" />
-                <span className="hidden sm:inline">Nearest Events</span>
-                <span className="sm:hidden">Nearest</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleExportToExcel}
-                className="gap-2 w-full sm:w-auto"
-                size="sm"
-              >
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Export Excel</span>
-                <span className="sm:hidden">Export</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="gap-2 w-full sm:w-auto"
-                size="sm"
-              >
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
-                <span className="sm:hidden">{showFilters ? 'Hide' : 'Filters'}</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setImportDialogOpen(true)}
-                className="gap-2 w-full sm:w-auto"
-                size="sm"
-              >
-                <Upload className="h-4 w-4" />
-                <span className="hidden sm:inline">Import Events</span>
-                <span className="sm:hidden">Import</span>
-              </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => handleSort('date_time')}
+                  className="gap-2 w-full sm:w-auto"
+                  size="sm"
+                >
+                  <Clock className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nearest Events</span>
+                  <span className="sm:hidden">Nearest Events</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleExportToExcel}
+                  className="gap-2 w-full sm:w-auto"
+                  size="sm"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">Export Excel</span>
+                  <span className="sm:hidden">Export Excel</span>
+                </Button>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="gap-2 w-full sm:w-auto"
+                  size="sm"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+                  <span className="sm:hidden">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setImportDialogOpen(true)}
+                  className="gap-2 w-full sm:w-auto"
+                  size="sm"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span className="hidden sm:inline">Import Events</span>
+                  <span className="sm:hidden">Import Events</span>
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>

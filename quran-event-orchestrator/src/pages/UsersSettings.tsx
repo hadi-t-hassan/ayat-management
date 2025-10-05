@@ -436,11 +436,11 @@ export default function UsersSettings() {
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 type="submit"
                 disabled={loading || !isAdmin}
-                className="w-full md:w-auto"
+                className="w-full sm:w-auto"
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {editingUser ? 'Update User' : 'Add User'}
@@ -451,7 +451,7 @@ export default function UsersSettings() {
                   variant="outline"
                   onClick={handleCancelEdit}
                   disabled={loading}
-                  className="w-full md:w-auto"
+                  className="w-full sm:w-auto"
                 >
                   Cancel
                 </Button>
