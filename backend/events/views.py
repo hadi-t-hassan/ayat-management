@@ -8,9 +8,13 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-import openpyxl
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
+try:
+    import openpyxl
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    OPENPYXL_AVAILABLE = True
+except ImportError:
+    OPENPYXL_AVAILABLE = False
 from datetime import datetime, date, time
 import io
 import os
@@ -327,6 +331,12 @@ def leave_event_view(request, pk):
 @permission_classes([permissions.IsAuthenticated])
 def download_sample_excel(request):
     """Download sample Excel file for event import"""
+    if not OPENPYXL_AVAILABLE:
+        return Response(
+            {'error': 'Excel functionality not available. Please install openpyxl.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+    
     try:
         # Create a new workbook
         wb = Workbook()
@@ -399,6 +409,12 @@ def download_sample_excel(request):
 @permission_classes([permissions.IsAuthenticated])
 def import_events_excel(request):
     """Import events from Excel file"""
+    if not OPENPYXL_AVAILABLE:
+        return Response(
+            {'error': 'Excel functionality not available. Please install openpyxl.'},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+    
     try:
         if 'file' not in request.FILES:
             return Response(
