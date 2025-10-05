@@ -527,13 +527,14 @@ export default function UsersSettings() {
                         </TableCell>
                         <TableCell>{formatDate(user.created_at)}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
                               disabled={!isAdmin}
                               className="h-8 w-8 p-0"
                               onClick={() => handleEditUser(user)}
+                              title="Edit user"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -543,6 +544,7 @@ export default function UsersSettings() {
                               disabled={!isAdmin || user.id === currentProfile?.id}
                               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                               onClick={() => handleDeleteUser(user.id)}
+                              title="Delete user"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

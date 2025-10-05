@@ -1364,30 +1364,36 @@ ${event.dress_details && event.dress_details.length > 0 ? `- Dress: ${event.dres
                 )}
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={() => handleSort('date_time')}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 <Clock className="h-4 w-4" />
-                Nearest Events
+                <span className="hidden sm:inline">Nearest Events</span>
+                <span className="sm:hidden">Nearest</span>
               </Button>
               <Button
                 variant="outline"
                 onClick={handleExportToExcel}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 <FileText className="h-4 w-4" />
-                Export Excel
+                <span className="hidden sm:inline">Export Excel</span>
+                <span className="sm:hidden">Export</span>
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
+                size="sm"
               >
                 <FileText className="h-4 w-4" />
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
+                <span className="hidden sm:inline">{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+                <span className="sm:hidden">{showFilters ? 'Hide' : 'Filters'}</span>
               </Button>
             </div>
           </div>
@@ -1857,7 +1863,7 @@ ${event.dress_details && event.dress_details.length > 0 ? `- Dress: ${event.dres
                           <p className="text-sm">{formatDate(event.updated_at)}</p>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
+                          <div className="flex flex-wrap items-center gap-1">
                             {event.status === 'pending' && (
                               <>
                                 <Button
