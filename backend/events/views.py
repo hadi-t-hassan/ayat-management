@@ -8,7 +8,6 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-import pandas as pd
 import openpyxl
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -416,24 +415,34 @@ def import_events_excel(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Read Excel file
+        # Read Excel file using openpyxl
         try:
-            df = pd.read_excel(excel_file)
+            workbook = openpyxl.load_workbook(excel_file)
+            worksheet = workbook.active
+            
+            # Get headers from first row
+            headers = []
+            for cell in worksheet[1]:
+                headers.append(cell.value)
+            
+            # Validate required columns
+            required_columns = [
+                'Day', 'Date', 'Time', 'Duration (minutes)', 'Place', 'Number of Participants'
+            ]
+            missing_columns = [col for col in required_columns if col not in headers]
+            
+            if missing_columns:
+                return Response(
+                    {'error': f'Missing required columns: {", ".join(missing_columns)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create column mapping
+            col_map = {header: idx + 1 for idx, header in enumerate(headers)}
+            
         except Exception as e:
             return Response(
                 {'error': f'Failed to read Excel file: {str(e)}'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Validate required columns
-        required_columns = [
-            'Day', 'Date', 'Time', 'Duration (minutes)', 'Place', 'Number of Participants'
-        ]
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        
-        if missing_columns:
-            return Response(
-                {'error': f'Missing required columns: {", ".join(missing_columns)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -442,34 +451,98 @@ def import_events_excel(request):
         errors = []
         
         with transaction.atomic():
-            for index, row in df.iterrows():
+            for row_num in range(2, worksheet.max_row + 1):  # Skip header row
                 try:
+                    # Helper function to get cell value safely
+                    def get_cell_value(column_name, default=''):
+                        col_idx = col_map.get(column_name)
+                        if col_idx:
+                            cell_value = worksheet.cell(row=row_num, column=col_idx).value
+                            return str(cell_value).strip() if cell_value is not None else default
+                        return default
+                    
                     # Parse and validate data
-                    day = str(row['Day']).strip()
-                    event_date = pd.to_datetime(row['Date']).date()
-                    event_time = pd.to_datetime(row['Time']).time()
-                    duration = int(row['Duration (minutes)'])
-                    place = str(row['Place']).strip()
-                    participants = int(row['Number of Participants'])
+                    day = get_cell_value('Day')
+                    if not day:
+                        errors.append(f'Row {row_num}: Day is required')
+                        continue
+                    
+                    # Parse date
+                    date_str = get_cell_value('Date')
+                    try:
+                        if isinstance(date_str, datetime):
+                            event_date = date_str.date()
+                        else:
+                            event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    except:
+                        errors.append(f'Row {row_num}: Invalid date format. Use YYYY-MM-DD')
+                        continue
+                    
+                    # Parse time
+                    time_str = get_cell_value('Time')
+                    try:
+                        if isinstance(time_str, datetime):
+                            event_time = time_str.time()
+                        else:
+                            event_time = datetime.strptime(time_str, '%H:%M').time()
+                    except:
+                        errors.append(f'Row {row_num}: Invalid time format. Use HH:MM')
+                        continue
+                    
+                    # Parse duration
+                    duration_str = get_cell_value('Duration (minutes)')
+                    try:
+                        duration = int(duration_str)
+                    except:
+                        errors.append(f'Row {row_num}: Invalid duration. Must be a number')
+                        continue
+                    
+                    place = get_cell_value('Place')
+                    if not place:
+                        errors.append(f'Row {row_num}: Place is required')
+                        continue
+                    
+                    # Parse participants
+                    participants_str = get_cell_value('Number of Participants')
+                    try:
+                        participants = int(participants_str) if participants_str else 0
+                    except:
+                        participants = 0
                     
                     # Optional fields
-                    status = str(row.get('Status', 'pending')).strip().lower()
+                    status = get_cell_value('Status', 'pending').lower()
                     if status not in ['pending', 'confirmed', 'completed', 'cancelled']:
                         status = 'pending'
                     
+                    # Parse meeting time
                     meeting_time = None
-                    if pd.notna(row.get('Meeting Time')):
-                        meeting_time = pd.to_datetime(row['Meeting Time']).time()
+                    meeting_time_str = get_cell_value('Meeting Time')
+                    if meeting_time_str:
+                        try:
+                            if isinstance(meeting_time_str, datetime):
+                                meeting_time = meeting_time_str.time()
+                            else:
+                                meeting_time = datetime.strptime(meeting_time_str, '%H:%M').time()
+                        except:
+                            pass  # Skip invalid meeting time
                     
+                    # Parse meeting date
                     meeting_date = None
-                    if pd.notna(row.get('Meeting Date')):
-                        meeting_date = pd.to_datetime(row['Meeting Date']).date()
+                    meeting_date_str = get_cell_value('Meeting Date')
+                    if meeting_date_str:
+                        try:
+                            if isinstance(meeting_date_str, datetime):
+                                meeting_date = meeting_date_str.date()
+                            else:
+                                meeting_date = datetime.strptime(meeting_date_str, '%Y-%m-%d').date()
+                        except:
+                            pass  # Skip invalid meeting date
                     
-                    place_of_meeting = str(row.get('Place of Meeting', '')).strip() or None
-                    vehicle = str(row.get('Vehicle', '')).strip() or None
-                    camera_man = str(row.get('Camera Man', '')).strip() or None
-                    participation_type = str(row.get('Participation Type', '')).strip() or None
-                    event_reason = str(row.get('Event Reason', '')).strip() or None
+                    place_of_meeting = get_cell_value('Place of Meeting') or None
+                    vehicle = get_cell_value('Vehicle') or None
+                    camera_man = get_cell_value('Camera Man') or None
+                    participation_type = get_cell_value('Participation Type') or None
+                    event_reason = get_cell_value('Event Reason') or None
                     
                     # Create event
                     event = Event.objects.create(
@@ -493,7 +566,7 @@ def import_events_excel(request):
                     imported_count += 1
                     
                 except Exception as e:
-                    errors.append(f'Row {index + 2}: {str(e)}')
+                    errors.append(f'Row {row_num}: {str(e)}')
                     continue
         
         # Update statistics
@@ -506,7 +579,7 @@ def import_events_excel(request):
         response_data = {
             'message': f'Successfully imported {imported_count} events',
             'imported_count': imported_count,
-            'total_rows': len(df)
+            'total_rows': worksheet.max_row - 1  # Subtract header row
         }
         
         if errors:
